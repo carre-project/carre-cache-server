@@ -1,0 +1,27 @@
+{
+  "name": "carre-cache",
+  "version": "0.0.5",
+  "description": "a CARRE cache mini-server designed to optimize CARRE applications external and internal API requests",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": "4.x"
+  },
+  "keywords": [
+    "CARRE",
+    "CACHE",
+    "NODEJS"
+  ],
+  "author": "Nick Portokallidis",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.6.1",
+    "cors": "^2.7.1",
+    "express": "^4.13.4",
+    "memory-cache": "^0.1.4",
+    "request": "^2.69.0"
+  }
+}
