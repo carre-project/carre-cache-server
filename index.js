@@ -9,7 +9,7 @@ var express = require('express'),
     app = express();
     
 var Store = require("jfs");
-var db = new Store("data",{type:'single'});
+var db = new Store("data/data",{type:'single'});
 
 //synchronous requests with recursive technique
 var callAPIs=function ( APIs ) {
