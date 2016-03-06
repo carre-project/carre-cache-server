@@ -18,9 +18,11 @@
   "author": "Nick Portokallidis",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.3.3",
     "compression": "^1.6.1",
     "cors": "^2.7.1",
     "express": "^4.13.4",
+    "jfs": "^0.2.6",
     "memory-cache": "^0.1.4",
     "request": "^2.69.0"
   }
