@@ -6,37 +6,17 @@ var express = require('express'),
     Promise = require("bluebird"),
     request = Promise.promisifyAll(require("request")),
     mcache = require('memory-cache'),
-    app = express();
+    app = express(),
+    nodemailer = require('nodemailer'),
+    sgTransport = require('nodemailer-sendgrid-transport'),
+    bodyParser = require('body-parser');
+    
+    
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
     
 var Store = require("jfs");
 var db = new Store("data/data",{type:'single'});
-
-//synchronous requests with recursive technique
-var callAPIs=function ( APIs ) {
-  var API = APIs.shift();
-  setTimeout(function(){
-    console.log(API);
-      request(API, function(err, res, body) { 
-        if( APIs.length ) {
-          callAPIs ( APIs );
-        }
-      });
-  },3000);
-}
-
-// memory cache implementation
-var cache = () => {
-    return (req, res, next) => {
-        let key = req.params.req_url_id || ('__express__' + req.originalUrl || req.url);
-        let cachedBody = mcache.get(key);
-        if (cachedBody) {
-            console.log('Load from CACHE:', key);
-            res.status(200).send(cachedBody);
-            return
-        }
-        else next();
-    }
-}
 
 // var whitelist = [
 //     'http://entry.carre-project.eu', 
@@ -53,28 +33,115 @@ app.use(compression());
 
 
 /* CONFIG */
-var SERVER_PORT = 3002;
+var SERVER_PORT = process.env.PORT||80;
+var PASSWORD = process.env.PASSWORD||'demo1234';
     
 
+
+/* ! ROUTES ! */
+
+// CARRE api cache route!
+app.get('/carreapi/:req_url_id/:original_api/:original_query/:token?', cache(), handleCarreApiCache);
+
+//invalidate and refresh portion or whole cache from requests saved in file
+app.get('/refresh_cache/:req_url_id?/:delete?', refreshCache);
+
+//email route
+app.post('/sendemail', sendEmail);
+
+    /* Simple secondary routes */
+    
     //get all memory cache available
-app.get('/get_cache', (req, res) => {
-    res.status(200).json({
-        total_elements: mcache.size(),
-        elements: mcache.keys()
+    app.get('/get_cache', (req, res) => {
+        res.status(200).json({
+            total_elements: mcache.size(),
+            elements: mcache.keys()
+        });
     });
-});
     //get all requests that saved to file
-app.get('/get_requests', (req, res) => {
-    res.status(200).json(db.allSync());
-});
-    //get all requests that saved to file
-app.get('/clear_cache', (req, res) => {
-    var cachesize=mcache.size();
-    mcache.clear();
-    res.status(200).json({msg:"Cleared "+cachesize+" items",data:cachesize});
-});
-    //invalidate and refresh portion or whole cache from requests saved in file
-app.get('/refresh_cache/:req_url_id?', (req, res) => {
+    app.get('/get_requests', (req, res) => {
+        res.status(200).json(db.allSync());
+    });
+    //Clear requests
+    app.get('/clear_requests/:password', (req, res) => {
+        var cachedRequests=0;
+        if(req.params.password!==PASSWORD) res.status(404).send('Not found');
+        else {
+            for(var prop in db.allSync()) { db.delete(prop); cachedRequests++;}
+            res.status(200).json({msg:"Cleared "+cachedRequests+" requests",data:cachedRequests});
+        }
+    });
+    //Clear memory cache
+    app.get('/clear_cache/:password', (req, res) => {
+        if(req.params.password!==PASSWORD) res.status(404).send('Not found');
+        else {
+            var cachesize=mcache.size();
+            mcache.clear();
+            res.status(200).json({msg:"Cleared "+cachesize+" items",data:cachesize});
+        }
+    });
+
+
+
+
+/* MAIN FUNCTIONS */
+
+//synchronous requests with recursive technique
+function callAPIs( APIs ) {
+  var API = APIs.shift();
+  setTimeout(function(){
+    console.log(API);
+      request(API, function(err, res, body) { 
+        if( APIs.length ) {
+          callAPIs ( APIs );
+        }
+      });
+  },3000);
+}
+
+// memory cache implementation
+function cache() {
+    return (req, res, next) => {
+        let key = req.params.req_url_id || ('__express__' + req.originalUrl || req.url);
+        let cachedBody = mcache.get(key);
+        if (cachedBody) {
+            console.log('Load from CACHE:', key);
+            res.status(200).send(cachedBody);
+            return
+        }
+        else next();
+    }
+}
+
+function sendEmail(req, res) {
+    var action=req.body.action;
+    var data=req.body.reqdata;
+    var user=req.body.user;
+
+    var sendgrid=nodemailer.createTransport(sgTransport({
+        auth: {
+            api_key: process.env.SENDGRID_API_KEY||'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'
+        }
+    }));
+    
+    // send mail
+    sendgrid.sendMail({
+        from: process.env.EMAIL_FROM || 'entry.system@nporto.com',
+        to: process.env.EMAIL_TO || 'portokallidis@gmail.com',
+        subject: 'CARRE entry system: '+action,
+        text: 'From user: '+user+'\n\n'+data
+    }, function(error, response) {
+       if (error) {
+            console.log(error);
+       } else {
+            console.log('Message sent');
+       }
+    });
+
+    res.status(200).json({msg:'ok'});
+}
+
+function refreshCache(req,res) {
     var req_id = req.params.req_url_id?req.params.req_url_id.split(','):null;
     var cacheRequests = db.allSync();
     var results=[];
@@ -86,12 +153,15 @@ app.get('/refresh_cache/:req_url_id?', (req, res) => {
                     //delete from memory
                     mcache.del(prop);
                     
+                    //delete request from filesystem
+                    if(req.params.delete) db.delete(prop);
+                    
                     //push into refreshing cue
                     
-                    results.push('http://beta.carre-project.eu:3002'+cacheRequests[prop].req);
+                    results.push('http://localhost'+cacheRequests[prop].req);
                 }
             }
-        } else results.push('http://beta.carre-project.eu:3002'+cacheRequests[prop].req);
+        } else results.push('http://localhost'+cacheRequests[prop].req);
     }
     if(results.length>0) callAPIs(results);
     
@@ -99,13 +169,13 @@ app.get('/refresh_cache/:req_url_id?', (req, res) => {
         request: req_id||"refresh all cache",
         ttl:(results.length+1)*3+" sec"
     });
-});
+}
 
-// CARRE api cache route!
-app.get('/carre/:req_url_id/:original_api/:original_query/:token?', cache(), (req, res) => {
+
+function handleCarreApiCache(req, res) {
     // console.log('Params:',req.params);
     var cacheKey = req.params.req_url_id;
-    var token = req.params.token || ''
+    var token = req.params.token || '';
     var json = {
         sparql: req.params.original_query,
         token: token
@@ -116,11 +186,9 @@ app.get('/carre/:req_url_id/:original_api/:original_query/:token?', cache(), (re
     
     //Lets configure and request
     request({
-        url: req.params.original_api, //URL to hit
+        url: req.params.original_api.replace("https://","http://"), //replace https->http HACK should be removed
         method: 'POST',
-        //Lets post the following key/values as form
         json: json
-
     }, function(error, response, body) {
         if (error) {
             console.log(error);
@@ -142,8 +210,8 @@ app.get('/carre/:req_url_id/:original_api/:original_query/:token?', cache(), (re
     
         }
     });
-});
+}
 
 app.listen(SERVER_PORT, function() {
     console.log('CACHE server listening on port: ', SERVER_PORT);
-})
+});

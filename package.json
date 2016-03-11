@@ -1,6 +1,6 @@
 {
   "name": "carre-cache",
-  "version": "0.0.5",
+  "version": "0.1.5",
   "description": "a CARRE cache mini-server designed to optimize CARRE applications external and internal API requests",
   "main": "index.js",
   "scripts": {
@@ -19,11 +19,14 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.3.3",
+    "body-parser": "^1.15.0",
     "compression": "^1.6.1",
     "cors": "^2.7.1",
     "express": "^4.13.4",
     "jfs": "^0.2.6",
     "memory-cache": "^0.1.4",
+    "nodemailer": "^2.3.0",
+    "nodemailer-sendgrid-transport": "^0.2.0",
     "request": "^2.69.0"
   }
 }
