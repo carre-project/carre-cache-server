@@ -27,6 +27,6 @@
     "memory-cache": "^0.1.4",
     "nodemailer": "^2.3.0",
     "nodemailer-sendgrid-transport": "^0.2.0",
-    "request": "^2.69.0"
+    "request": "^2.71.1"
   }
 }
