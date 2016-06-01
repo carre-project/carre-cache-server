@@ -107,7 +107,10 @@ function sendEmail(req, res) {
     var action=req.body.action;
     var data=req.body.reqdata;
     var user=req.body.user;
-
+    var parsedData = JSON.parse(data);
+    var title = parsedData.title?parsedData.title:"";
+    console.log(title);
+    
     var sendgrid=nodemailer.createTransport(sgTransport({
         auth: {
             api_key: process.env.SENDGRID_API_KEY||'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'
@@ -118,7 +121,7 @@ function sendEmail(req, res) {
     sendgrid.sendMail({
         from: process.env.EMAIL_FROM || 'entry.system@nporto.com',
         to: process.env.EMAIL_TO || 'portokallidis@gmail.com',
-        subject: 'CARRE entry system: '+action +" "+ JSON.parse(data).title,
+        subject: 'CARRE entry system: '+action +" "+ title,
         text: 'From user: '+user+'\n\n'+data
     }, function(error, response) {
        if (error) {
