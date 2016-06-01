@@ -74,7 +74,7 @@ app.post('/sendemail', sendEmail);
 
 
 
-/* MAIN FUNCTIONS */
+/* MAIN FUNCTIONS */ 
 
 //synchronous requests with recursive technique
 function callAPIs( APIs ) {
@@ -118,7 +118,7 @@ function sendEmail(req, res) {
     sendgrid.sendMail({
         from: process.env.EMAIL_FROM || 'entry.system@nporto.com',
         to: process.env.EMAIL_TO || 'portokallidis@gmail.com',
-        subject: 'CARRE entry system: '+action,
+        subject: 'CARRE entry system: '+action +" "+ JSON.parse(data).title,
         text: 'From user: '+user+'\n\n'+data
     }, function(error, response) {
        if (error) {
