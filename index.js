@@ -10,22 +10,21 @@ var express = require('express'),
     nodemailer = require('nodemailer'),
     sgTransport = require('nodemailer-sendgrid-transport'),
     bodyParser = require('body-parser');
-    
-    
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-    
 var Store = require("jfs");
 var db = new Store("data/data",{type:'single'});
 
+// express middleware plugins
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 app.use(cors());
 app.use(compression());
 
-
-/* CONFIG */
-var SERVER_PORT = process.env.PORT||80;
-var PASSWORD = process.env.PASSWORD||'demo1234';
     
+    
+/* CONFIG */
+var SERVER_PORT = process.env.PORT||3000;
+var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
+
 
 
 /* ! ROUTES ! */
@@ -39,38 +38,48 @@ app.get('/refresh_cache/:req_url_id?/:delete?', refreshCache);
 //email route
 app.post('/sendemail', sendEmail);
 
-    /* Simple secondary routes */
-    
-    //get all memory cache available
-    app.get('/get_cache', (req, res) => {
-        res.status(200).json({
-            total_elements: mcache.size(),
-            elements: mcache.keys()
-        });
-    });
-    //get all requests that saved to file
-    app.get('/get_requests', (req, res) => {
-        res.status(200).json(db.allSync());
-    });
-    //Clear requests
-    app.get('/clear_requests/:password', (req, res) => {
-        var cachedRequests=0;
-        if(req.params.password!==PASSWORD) res.status(404).send('Not found');
-        else {
-            for(var prop in db.allSync()) { db.delete(prop); cachedRequests++;}
-            res.status(200).json({msg:"Cleared "+cachedRequests+" requests",data:cachedRequests});
-        }
-    });
-    //Clear memory cache
-    app.get('/clear_cache/:password', (req, res) => {
-        if(req.params.password!==PASSWORD) res.status(404).send('Not found');
-        else {
-            var cachesize=mcache.size();
-            mcache.clear();
-            res.status(200).json({msg:"Cleared "+cachesize+" items",data:cachesize});
-        }
-    });
 
+/* Simple secondary routes */
+
+//get all memory cache available
+app.get('/get_cache', (req, res) => {
+    res.status(200).json({
+        total_elements: mcache.size(),
+        elements: mcache.keys()
+    });
+});
+//get all requests that saved to file
+app.get('/get_requests', (req, res) => {
+    res.status(200).json(db.allSync());
+});
+//Clear requests
+app.get('/clear_requests/:password', (req, res) => {
+    var cachedRequests=0;
+    if(req.params.password!==PASSWORD) res.status(404).send('Not found');
+    else {
+        for(var prop in db.allSync()) { db.delete(prop); cachedRequests++;}
+        res.status(200).json({msg:"Cleared "+cachedRequests+" requests",data:cachedRequests});
+    }
+});
+//Clear memory cache
+app.get('/clear_cache/:password', (req, res) => {
+    if(req.params.password!==PASSWORD) res.status(404).send('Not found');
+    else {
+        var cachesize=mcache.size();
+        mcache.clear();
+        res.status(200).json({msg:"Cleared "+cachesize+" items",data:cachesize});
+    }
+});
+
+
+
+
+
+
+
+app.listen(SERVER_PORT, function() {
+    console.log('Entry system server listening on port: ', SERVER_PORT);
+});
 
 
 
@@ -130,7 +139,6 @@ function sendEmail(req, res) {
             console.log('Message sent');
        }
     });
-
     res.status(200).json({msg:'ok'});
 }
 
@@ -150,7 +158,6 @@ function refreshCache(req,res) {
                     if(req.params.delete) db.delete(prop);
                     
                     //push into refreshing cue
-                    
                     results.push('http://localhost'+cacheRequests[prop].req);
                 }
             }
@@ -204,7 +211,3 @@ function handleCarreApiCache(req, res) {
         }
     });
 }
-
-app.listen(SERVER_PORT, function() {
-    console.log('CACHE server listening on port: ', SERVER_PORT);
-});
