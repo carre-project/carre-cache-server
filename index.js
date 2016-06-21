@@ -22,7 +22,7 @@ app.use(compression());
     
     
 /* CONFIG */
-var SERVER_PORT = process.env.PORT||3000;
+var SERVER_PORT = process.env.PORT||80;
 var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
 
