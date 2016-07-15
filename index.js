@@ -29,7 +29,7 @@ var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
 // only log error responses
 
-if(process.env.NODE_ENV!=='development') app.use(morgan('combined', {
+if(process.env.NODE_ENV==='development') app.use(morgan('combined', {
   skip: function (req, res) { return res.statusCode < 400 }
 }));
 
@@ -165,7 +165,7 @@ function refreshCache(req,res) {
                     if(req.params.delete) db.delete(prop);
                     
                     //push into refreshing cue
-                    results.push(cacheRequests[prop].req);
+                    results.push("http://localhost"+cacheRequests[prop].req);
                 }
             }
         } else results.push(cacheRequests[prop].req);
@@ -194,7 +194,7 @@ function handleCarreApiCache(req, res) {
     console.log(cacheKey,apiUrl,token);
     //Lets configure and request
     request({
-        url: apiUrl, //.replace("https://","http://"), //replace https->http HACK should be removed
+        url: apiUrl.replace("https://","http://"), //replace https->http HACK should be removed
         method: 'POST',
         json: json
     }, function(error, response, body) {
