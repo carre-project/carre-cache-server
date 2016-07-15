@@ -29,7 +29,7 @@ var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
 // only log error responses
 morgan('combined', {
-  skip: function (req, res) { return res.statusCode < 400 }
+//   skip: function (req, res) { return res.statusCode < 400 }
 });
 
 
@@ -89,7 +89,7 @@ app.listen(SERVER_PORT, function() {
 
 
 
-/* MAIN FUNCTIONS */ 
+/* MAIN FUNCTIONS */
 
 //synchronous requests with recursive technique
 function callAPIs( APIs ) {
