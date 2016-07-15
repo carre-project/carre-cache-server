@@ -28,7 +28,8 @@ var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
 
 // only log error responses
-app.use(morgan('combined', {
+
+if(process.env.NODE_ENV!=='development') app.use(morgan('combined', {
   skip: function (req, res) { return res.statusCode < 400 }
 }));
 
@@ -182,6 +183,7 @@ function handleCarreApiCache(req, res) {
     // console.log('Params:',req.params);
     var cacheKey = req.params.req_url_id;
     var token = req.params.token || '';
+    var apiUrl = decodeURIComponent(req.params.original_api);
     var json = {
         sparql: req.params.original_query,
         token: token
@@ -189,8 +191,7 @@ function handleCarreApiCache(req, res) {
     if (cacheKey.indexOf('public_') === 0) {
         delete json.token;
     }
-    var apiUrl = decodeURIComponent(req.params.original_api);
-    console.log(apiUrl)
+    console.log(cacheKey,apiUrl,token);
     //Lets configure and request
     request({
         url: apiUrl, //.replace("https://","http://"), //replace https->http HACK should be removed
