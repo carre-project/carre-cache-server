@@ -189,7 +189,7 @@ function handleCarreApiCache(req, res) {
     if (cacheKey.indexOf('public_') === 0) {
         delete json.token;
     }
-    var apiUrl = decodeURI(req.params.original_api);
+    var apiUrl = decodeURIComponent(req.params.original_api);
     console.log(apiUrl)
     //Lets configure and request
     request({
