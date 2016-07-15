@@ -28,9 +28,9 @@ var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
 
 // only log error responses
-morgan('combined', {
-//   skip: function (req, res) { return res.statusCode < 400 }
-});
+app.user(morgan('combined', {
+  skip: function (req, res) { return res.statusCode < 400 }
+}));
 
 
 /* ! ROUTES ! */
