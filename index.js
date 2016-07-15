@@ -28,7 +28,7 @@ var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
 
 // only log error responses
-app.user(morgan('combined', {
+app.use(morgan('combined', {
   skip: function (req, res) { return res.statusCode < 400 }
 }));
 
