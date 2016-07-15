@@ -6,7 +6,6 @@ var express = require('express'),
     Promise = require("bluebird"),
     request = Promise.promisifyAll(require("request")),
     mcache = require('memory-cache'),
-    morgan = require('morgan'),
     app = express(),
     nodemailer = require('nodemailer'),
     sgTransport = require('nodemailer-sendgrid-transport'),
@@ -25,13 +24,6 @@ app.use(compression());
 /* CONFIG */
 var SERVER_PORT = process.env.PORT||80;
 var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
-
-
-// only log error responses
-
-if(process.env.NODE_ENV==='development') app.use(morgan('combined', {
-  skip: function (req, res) { return res.statusCode < 400 }
-}));
 
 
 /* ! ROUTES ! */
@@ -184,14 +176,15 @@ function handleCarreApiCache(req, res) {
     var cacheKey = req.params.req_url_id;
     var token = req.params.token || '';
     var apiUrl = decodeURIComponent(req.params.original_api);
+    var sparqlQuery = decodeURIComponent(req.params.original_query);
     var json = {
-        sparql: req.params.original_query,
+        sparql: sparqlQuery,
         token: token
     };
     if (cacheKey.indexOf('public_') === 0) {
         delete json.token;
     }
-    console.log(cacheKey,apiUrl,token);
+    
     //Lets configure and request
     request({
         url: apiUrl.replace("https://","http://"), //replace https->http HACK should be removed
@@ -199,11 +192,9 @@ function handleCarreApiCache(req, res) {
         json: json
     }, function(error, response, body) {
         if (error) {
-            console.log(error);
             res.status(500).send(error);
         }
         else if (body.status == 500) {
-            console.log(body);
             res.status(500).send(body);
         }
         else {
