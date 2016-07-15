@@ -189,10 +189,11 @@ function handleCarreApiCache(req, res) {
     if (cacheKey.indexOf('public_') === 0) {
         delete json.token;
     }
-    
+    var apiUrl = decodeURI(req.params.original_api);
+    console.log(apiUrl)
     //Lets configure and request
     request({
-        url: req.params.original_api, //.replace("https://","http://"), //replace https->http HACK should be removed
+        url: apiUrl, //.replace("https://","http://"), //replace https->http HACK should be removed
         method: 'POST',
         json: json
     }, function(error, response, body) {
