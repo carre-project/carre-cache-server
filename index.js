@@ -6,6 +6,7 @@ var express = require('express'),
     Promise = require("bluebird"),
     request = Promise.promisifyAll(require("request")),
     mcache = require('memory-cache'),
+    morgan = require('morgan'),
     app = express(),
     nodemailer = require('nodemailer'),
     sgTransport = require('nodemailer-sendgrid-transport'),
@@ -25,6 +26,11 @@ app.use(compression());
 var SERVER_PORT = process.env.PORT||80;
 var PASSWORD = process.env.CLEAR_PASSWORD||'demo1234';
 
+
+// only log error responses
+morgan('combined', {
+  skip: function (req, res) { return res.statusCode < 400 }
+});
 
 
 /* ! ROUTES ! */
@@ -78,7 +84,7 @@ app.get('/clear_cache/:password', (req, res) => {
 
 
 app.listen(SERVER_PORT, function() {
-    console.log('Entry system server listening on port: ', SERVER_PORT);
+    console.log('Cache server listening on port: ', SERVER_PORT);
 });
 
 
@@ -158,10 +164,10 @@ function refreshCache(req,res) {
                     if(req.params.delete) db.delete(prop);
                     
                     //push into refreshing cue
-                    results.push('http://localhost'+cacheRequests[prop].req);
+                    results.push(cacheRequests[prop].req);
                 }
             }
-        } else results.push('http://localhost'+cacheRequests[prop].req);
+        } else results.push(cacheRequests[prop].req);
     }
     if(results.length>0) callAPIs(results);
     
@@ -186,7 +192,7 @@ function handleCarreApiCache(req, res) {
     
     //Lets configure and request
     request({
-        url: req.params.original_api.replace("https://","http://"), //replace https->http HACK should be removed
+        url: req.params.original_api, //.replace("https://","http://"), //replace https->http HACK should be removed
         method: 'POST',
         json: json
     }, function(error, response, body) {
