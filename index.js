@@ -198,9 +198,11 @@ function handleCarreApiCache(req, res) {
     }, function(error, response, body) {
         if (error) {
             console.log(error);
+            res.status(body.status).send(error);
         }
         else if (body.status == 500) {
             console.log(body);
+            res.status(500).send(body);
         }
         else {
             console.log('Load from API:', cacheKey);
